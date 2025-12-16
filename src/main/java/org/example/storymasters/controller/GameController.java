@@ -9,10 +9,14 @@ public class GameController implements Controller {
     @Override
     public void register(Router router) {
         router.post("/create-game", ctx -> {
-            var game = GameService.get().createGame();
-            var res = new CreateGameResponse(game.getConnectionCode());
+            var res = createGame();
             ctx.status(HttpStatus.OK);
             ctx.json(res);
         });
+    }
+
+    private CreateGameResponse createGame() {
+        var game = GameService.get().createGame();
+        return new CreateGameResponse(game.getConnectionCode());
     }
 }
