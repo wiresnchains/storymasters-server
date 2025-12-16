@@ -1,4 +1,4 @@
-package org.example.scrumkahoot.model;
+package org.example.storymasters.model;
 
 public class Game {
     private String connectionCode;

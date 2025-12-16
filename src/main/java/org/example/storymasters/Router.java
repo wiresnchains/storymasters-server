@@ -1,4 +1,4 @@
-package org.example.scrumkahoot;
+package org.example.storymasters;
 
 import io.javalin.Javalin;
 import io.javalin.http.Handler;

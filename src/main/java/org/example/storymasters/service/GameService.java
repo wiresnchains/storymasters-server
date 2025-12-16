@@ -1,6 +1,6 @@
-package org.example.scrumkahoot.service;
+package org.example.storymasters.service;
 
-import org.example.scrumkahoot.model.Game;
+import org.example.storymasters.model.Game;
 
 import java.util.ArrayList;
 import java.util.List;
