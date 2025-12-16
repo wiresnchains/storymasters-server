@@ -1,8 +1,9 @@
-package org.example.scrumkahoot.controller;
+package org.example.storymasters.controller;
 
-import org.example.scrumkahoot.Router;
-import org.example.scrumkahoot.dto.CreateGameResponse;
-import org.example.scrumkahoot.service.GameService;
+import io.javalin.http.HttpStatus;
+import org.example.storymasters.Router;
+import org.example.storymasters.dto.CreateGameResponse;
+import org.example.storymasters.service.GameService;
 
 public class GameController implements Controller {
     @Override
@@ -10,6 +11,7 @@ public class GameController implements Controller {
         router.post("/create-game", ctx -> {
             var game = GameService.get().createGame();
             var res = new CreateGameResponse(game.getConnectionCode());
+            ctx.status(HttpStatus.OK);
             ctx.json(res);
         });
     }

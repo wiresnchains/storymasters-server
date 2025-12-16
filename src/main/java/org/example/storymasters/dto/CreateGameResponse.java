@@ -1,4 +1,4 @@
-package org.example.scrumkahoot.dto;
+package org.example.storymasters.dto;
 
 public class CreateGameResponse {
     private String connectionCode;

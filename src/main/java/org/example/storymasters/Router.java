@@ -1,4 +1,4 @@
-package org.example.scrumkahoot;
+package org.example.storymasters;
 
 import io.javalin.Javalin;
 import io.javalin.http.Handler;
@@ -7,7 +7,15 @@ public class Router {
     private final Javalin app;
 
     public Router() {
-        app = Javalin.create();
+        app = Javalin.create(config -> {
+            config.bundledPlugins.enableCors(cors -> {
+                cors.addRule(rule -> {
+                    rule.allowHost("http://localhost:3000");
+                    rule.allowHost("https://wiresnchains.com");
+                    rule.allowCredentials = true;
+                });
+            });
+        });
     }
 
     public void run(int port) {

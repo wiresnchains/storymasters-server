@@ -1,6 +1,6 @@
-package org.example.scrumkahoot;
+package org.example.storymasters;
 
-import org.example.scrumkahoot.controller.*;
+import org.example.storymasters.controller.*;
 
 public class Application {
     public static void main(String[] args) {
