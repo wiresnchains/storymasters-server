@@ -2,6 +2,11 @@ package org.example.storymasters;
 
 import io.javalin.Javalin;
 import io.javalin.http.Handler;
+import io.javalin.websocket.WsCloseHandler;
+import io.javalin.websocket.WsConnectHandler;
+import io.javalin.websocket.WsMessageHandler;
+
+import java.util.function.Function;
 
 public class Router {
     private final Javalin app;
@@ -28,5 +33,13 @@ public class Router {
 
     public void post(String path, Handler handler) {
         app.post(path, handler);
+    }
+
+    public void ws(String path, WsConnectHandler onConnect, WsMessageHandler onMessage, WsCloseHandler onClose) {
+        app.ws(path, ws -> {
+            ws.onConnect(onConnect);
+            ws.onMessage(onMessage);
+            ws.onClose(onClose);
+        });
     }
 }

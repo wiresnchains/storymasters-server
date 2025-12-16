@@ -1,5 +1,7 @@
 package org.example.storymasters.service;
 
+import org.example.storymasters.exception.GameNotFoundException;
+import org.example.storymasters.exception.PlayerNameTakenException;
 import org.example.storymasters.model.Game;
 
 import java.util.ArrayList;
@@ -16,8 +18,23 @@ public class GameService {
         return game;
     }
 
-    public List<Game> getGames() {
-        return games;
+    public Game getGame(String connectionCode) throws GameNotFoundException {
+        for (var game : games) {
+            if (game.getConnectionCode().equals(connectionCode)) {
+                return game;
+            }
+        }
+
+        throw new GameNotFoundException("Game met koppel code " + connectionCode + " bestaat niet");
+    }
+
+    public void joinGame(String name, String connectionCode) throws GameNotFoundException, PlayerNameTakenException {
+        var game = getGame(connectionCode);
+        game.addPlayer(name);
+    }
+
+    public void quitGame(String name, String connectionCode) throws GameNotFoundException {
+        getGame(connectionCode).removePlayer(name);
     }
 
     private String generateConnectionCode() {
