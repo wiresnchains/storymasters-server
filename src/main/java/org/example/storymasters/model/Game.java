@@ -1,10 +1,10 @@
 package org.example.storymasters.model;
 
 public class Game {
-    private String connectionCode;
+    private final String connectionCode;
 
     public Game(String connectionCode) {
-        connectionCode = connectionCode;
+        this.connectionCode = connectionCode;
     }
 
     public String getConnectionCode() {
