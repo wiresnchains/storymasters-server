@@ -9,7 +9,7 @@ public class GameService {
     private final List<Game> games = new ArrayList<>();
 
     public Game createGame() {
-        var game = new Game();
+        Game game = new Game();
 
         games.add(game);
 

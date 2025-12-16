@@ -1,17 +1,17 @@
 package org.example.storymasters.dto;
 
 public class CreateGameResponse {
-    private String connectionCode;
+    private String code;
 
     public CreateGameResponse(String connectionCode) {
-        this.connectionCode = connectionCode;
+        this.code = connectionCode;
     }
 
-    public String getConnectionCode() {
-        return connectionCode;
+    public String getCode() {
+        return code;
     }
 
-    public void setConnectionCode(String connectionCode) {
-        this.connectionCode = connectionCode;
+    public void setCode(String connectionCode) {
+        this.code = connectionCode;
     }
 }
