@@ -14,9 +14,11 @@ import java.util.List;
 public class Game {
     private final String connectionCode;
     private final List<Player> players = new ArrayList<>();
+    private boolean started;
 
     public Game(String connectionCode) {
         this.connectionCode = connectionCode;
+        this.started = false;
     }
 
     public String getConnectionCode() {
@@ -93,5 +95,14 @@ public class Game {
         broadcast("show-leaderboard", new LeaderboardPayload(players.stream().map(PlayerPayload::new).toList()));
 
         System.out.println("Game " + connectionCode + " entered leaderboard stage");
+    }
+
+    public boolean isStarted() {
+        return started;
+    }
+
+    public void start() {
+        this.started = true;
+        broadcast("start-round", "random thema idk");
     }
 }

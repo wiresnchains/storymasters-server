@@ -21,6 +21,11 @@ public class GameService {
         return game;
     }
 
+    public void startGame(String connectionCode) throws GameNotFoundException {
+        var game = getGame(connectionCode);
+        game.start();
+    }
+
     public Game getGame(String connectionCode) throws GameNotFoundException {
         for (var game : games) {
             if (game.getConnectionCode().equals(connectionCode)) {
@@ -33,6 +38,11 @@ public class GameService {
 
     public void joinGame(String name, String connectionCode, WsContext ctx) throws GameNotFoundException, PlayerNameTakenException {
         var game = getGame(connectionCode);
+
+        if (game.isStarted()) {
+            ctx.closeSession();
+        }
+
         game.addPlayer(name, ctx);
     }
 

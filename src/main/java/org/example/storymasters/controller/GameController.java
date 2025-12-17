@@ -10,6 +10,7 @@ import io.javalin.websocket.WsMessageContext;
 import org.example.storymasters.Router;
 import org.example.storymasters.dto.CreateGameResponse;
 import org.example.storymasters.dto.SendAnswerPayload;
+import org.example.storymasters.dto.StartGameRequest;
 import org.example.storymasters.dto.WebsocketMessage;
 import org.example.storymasters.exception.GameNotFoundException;
 import org.example.storymasters.exception.PlayerNameTakenException;
@@ -31,6 +32,14 @@ public class GameController implements Controller {
             ctx.json(res);
         });
 
+        router.post("/start-game", ctx -> {
+            var request = mapper.readValue(ctx.body(), StartGameRequest.class);
+            startGame(request.getConnectionCode());
+            ctx.status(HttpStatus.OK);
+            ctx.result("{}");
+            ctx.contentType("application/json");
+        });
+
         router.ws("/game/{code}/{name}", this::onConnect, this::onMessage, this::onClose);
 
         addEvent("send-user-story", (player, message) -> {
@@ -42,6 +51,10 @@ public class GameController implements Controller {
     private CreateGameResponse createGame() {
         var game = GameService.get().createGame();
         return new CreateGameResponse(game.getConnectionCode());
+    }
+
+    private void startGame(String connectionCode) {
+        GameService.get().startGame(connectionCode);
     }
 
     private void addEvent(String name, BiConsumer<Player, WebsocketMessage> handler) {
