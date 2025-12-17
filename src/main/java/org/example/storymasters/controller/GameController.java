@@ -53,7 +53,6 @@ public class GameController implements Controller {
 
     private CreateGameResponse createGame() {
         GameService gameService = GameService.get();
-        this.gameService = gameService;
         Game game = gameService.createGame();
         return new CreateGameResponse(game.getConnectionCode());
     }
