@@ -1,6 +1,10 @@
 package org.example.storymasters.model;
 
 import io.javalin.websocket.WsContext;
+import org.example.storymasters.dto.LeaderboardPayload;
+import org.example.storymasters.dto.PlayerPayload;
+import org.example.storymasters.dto.UserStoryPayload;
+import org.example.storymasters.dto.VotingPayload;
 import org.example.storymasters.exception.PlayerNameTakenException;
 
 import java.util.ArrayList;
@@ -55,5 +59,17 @@ public class Game {
         for (var player : players) {
             player.broadcast(eventName, data);
         }
+    }
+
+    public void showVotingStage(List<UserStory> userStories) {
+        broadcast("show-voting", new VotingPayload(userStories.stream().map(UserStoryPayload::new).toList(), false));
+    }
+
+    public void showVoteResults(List<UserStory> userStories) {
+        broadcast("show-voting", new VotingPayload(userStories.stream().map(UserStoryPayload::new).toList(), false));
+    }
+
+    public void showLeaderboard() {
+        broadcast("show-leaderboard", new LeaderboardPayload(players.stream().map(PlayerPayload::new).toList()));
     }
 }
