@@ -61,7 +61,7 @@ public class GameController implements Controller {
         }
         catch (GameNotFoundException | PlayerNameTakenException ex) {
             System.err.println(ex.getMessage());
-            ctx.session.close();
+            ctx.closeSession();
         }
     }
 
