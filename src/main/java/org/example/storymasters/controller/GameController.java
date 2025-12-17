@@ -43,8 +43,9 @@ public class GameController implements Controller {
         router.ws("/game/{code}/{name}", this::onConnect, this::onMessage, this::onClose);
 
         addEvent("send-user-story", (player, message) -> {
+            var game = player.getGame();
             SendAnswerPayload payload = mapper.convertValue(message.getData(), SendAnswerPayload.class);
-            System.out.println("Player " + player.getName() + " sent a user story: Als een " + payload.getAs() + " wil ik " + payload.getWantTo() + " zodat " + payload.getSoThat());
+            game.addUserStory(player, "Als een " + payload.getAs() + " wil ik " + payload.getWantTo() + " zodat " + payload.getSoThat());
         });
     }
 
