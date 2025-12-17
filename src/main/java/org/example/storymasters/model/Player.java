@@ -32,6 +32,6 @@ public class Player {
             return;
         }
 
-        socketCtx.send(new WebsocketMessage(event, data));
+        socketCtx.send(new WebsocketMessage(event, data, false));
     }
 }

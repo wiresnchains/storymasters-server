@@ -44,6 +44,7 @@ public class GameController implements Controller {
         addEvent("send-user-story", (player, message) -> {
             SendAnswerPayload payload = mapper.convertValue(message.getData(), SendAnswerPayload.class);
             System.out.println("Player " + player.getName() + " sent a user story: Als een " + payload.getAs() + " wil ik " + payload.getWantTo() + " zodat " + payload.getSoThat());
+            player.broadcast("send-message", "message");
         });
     }
 
