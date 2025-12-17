@@ -16,6 +16,9 @@ public class Router {
             config.bundledPlugins.enableCors(cors -> {
                 cors.addRule(rule -> {
                     rule.allowHost("http://localhost:3000");
+                    rule.allowHost("http://localhost:3001");
+                    rule.allowHost("http://127.0.0.1:3000");
+                    rule.allowHost("http://127.0.0.1:3001");
                     rule.allowHost("https://wiresnchains.com");
                     rule.allowCredentials = true;
                 });

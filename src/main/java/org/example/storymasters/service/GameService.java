@@ -6,15 +6,19 @@ import org.example.storymasters.exception.PlayerNameTakenException;
 import org.example.storymasters.model.Game;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GameService {
     private final List<Game> games = new ArrayList<>();
+    private final Map<String, Game> gamesMap = new LinkedHashMap<String, Game>();
 
     public Game createGame() {
         var game = new Game(generateConnectionCode());
 
         games.add(game);
+        gamesMap.put(game.getConnectionCode(), game);
 
         System.out.println("Created game " + game.getConnectionCode());
 
@@ -27,13 +31,15 @@ public class GameService {
     }
 
     public Game getGame(String connectionCode) throws GameNotFoundException {
-        for (var game : games) {
-            if (game.getConnectionCode().equals(connectionCode)) {
-                return game;
-            }
-        }
+        Game game = this.gamesMap.get(connectionCode);
+        // for (var game : games) {
+        //     if (game.getConnectionCode().equals(connectionCode)) {
+        //         return game;
+        //     }
+        // }
 
-        throw new GameNotFoundException("Game met koppel code " + connectionCode + " bestaat niet");
+        if (game != null) return game;
+        throw new GameNotFoundException("Game met koppelcode " + connectionCode + " bestaat niet");
     }
 
     public void joinGame(String name, String connectionCode, WsContext ctx) throws GameNotFoundException, PlayerNameTakenException {
@@ -61,7 +67,7 @@ public class GameService {
             int codeInt = (int) (Math.random() * 1_000_000);
             String code = String.format("%06d", codeInt);
 
-            boolean exists = false;
+                boolean exists = false;
             for (var game : games) {
                 if (game.getConnectionCode().equals(code)) {
                     exists = true;

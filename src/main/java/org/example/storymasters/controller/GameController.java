@@ -9,11 +9,12 @@ import io.javalin.websocket.WsConnectContext;
 import io.javalin.websocket.WsMessageContext;
 import org.example.storymasters.Router;
 import org.example.storymasters.dto.CreateGameResponse;
-import org.example.storymasters.dto.SendAnswerPayload;
+import org.example.storymasters.dto.GenericPayload;
 import org.example.storymasters.dto.StartGameRequest;
 import org.example.storymasters.dto.WebsocketMessage;
 import org.example.storymasters.exception.GameNotFoundException;
 import org.example.storymasters.exception.PlayerNameTakenException;
+import org.example.storymasters.model.Game;
 import org.example.storymasters.model.Player;
 import org.example.storymasters.service.GameService;
 
@@ -27,7 +28,8 @@ public class GameController implements Controller {
     @Override
     public void register(Router router) {
         router.post("/create-game", ctx -> {
-            var res = createGame();
+            CreateGameResponse res = createGame();
+            System.out.println("\nCreating game: " + res.getConnectionCode());
             ctx.status(HttpStatus.OK);
             ctx.json(res);
         });
@@ -44,13 +46,15 @@ public class GameController implements Controller {
 
         addEvent("send-user-story", (player, message) -> {
             var game = player.getGame();
-            SendAnswerPayload payload = mapper.convertValue(message.getData(), SendAnswerPayload.class);
-            game.addUserStory(player, "Als een " + payload.getAs() + " wil ik " + payload.getWantTo() + " zodat " + payload.getSoThat());
+            GenericPayload payload = mapper.convertValue(message.getData(), GenericPayload.class);
+            game.addUserStory(player, payload.getMessage());
         });
     }
 
     private CreateGameResponse createGame() {
-        var game = GameService.get().createGame();
+        GameService gameService = GameService.get();
+        this.gameService = gameService;
+        Game game = gameService.createGame();
         return new CreateGameResponse(game.getConnectionCode());
     }
 
@@ -70,8 +74,10 @@ public class GameController implements Controller {
         String code = ctx.pathParam("code");
         String name = ctx.pathParam("name");
 
+
         try {
             GameService.get().joinGame(name, code, ctx);
+            System.out.println(String.format("%s joined game %s", name, code));
         }
         catch (GameNotFoundException | PlayerNameTakenException ex) {
             System.err.println(ex.getMessage());
