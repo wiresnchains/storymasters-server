@@ -26,8 +26,17 @@ public class Game {
             }
         }
 
-        var player = new Player(name, ctx);
+        var player = new Player(name, ctx, this);
         this.players.add(player);
+
+        for (var playerIt : players) {
+            player.broadcast("player-joined", playerIt.getName());
+
+            if (playerIt != player) {
+                playerIt.broadcast("player-joined", name);
+            }
+        }
+
         return player;
     }
 
@@ -37,8 +46,15 @@ public class Game {
 
             if (player.getName().equals(name)) {
                 players.remove(i);
+                broadcast("player-removed", player.getName());
                 break;
             }
+        }
+    }
+
+    public void broadcast(String eventName, Object data) {
+        for (var player : players) {
+            player.broadcast(eventName, data);
         }
     }
 }

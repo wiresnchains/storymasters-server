@@ -15,6 +15,7 @@ import org.example.storymasters.dto.SendAnswerPayload;
 import org.example.storymasters.dto.WebsocketMessage;
 import org.example.storymasters.exception.GameNotFoundException;
 import org.example.storymasters.exception.PlayerNameTakenException;
+import org.example.storymasters.model.Game;
 import org.example.storymasters.model.Player;
 import org.example.storymasters.service.GameService;
 
@@ -44,7 +45,6 @@ public class GameController implements Controller {
         addEvent("send-user-story", (player, message) -> {
             SendAnswerPayload payload = mapper.convertValue(message.getData(), SendAnswerPayload.class);
             System.out.println("Player " + player.getName() + " sent a user story: Als een " + payload.getAs() + " wil ik " + payload.getWantTo() + " zodat " + payload.getSoThat());
-            player.broadcast("send-message", "message");
         });
     }
 
