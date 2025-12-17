@@ -1,7 +1,6 @@
 package org.example.storymasters.model;
 
 import io.javalin.websocket.WsContext;
-import org.eclipse.jetty.websocket.api.Session;
 import org.example.storymasters.exception.PlayerNameTakenException;
 
 import java.util.ArrayList;

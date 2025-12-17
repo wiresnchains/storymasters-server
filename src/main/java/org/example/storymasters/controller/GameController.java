@@ -4,10 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.http.HttpStatus;
-import io.javalin.json.JsonMapper;
 import io.javalin.websocket.WsCloseContext;
 import io.javalin.websocket.WsConnectContext;
-import io.javalin.websocket.WsContext;
 import io.javalin.websocket.WsMessageContext;
 import org.example.storymasters.Router;
 import org.example.storymasters.dto.CreateGameResponse;
@@ -15,7 +13,6 @@ import org.example.storymasters.dto.SendAnswerPayload;
 import org.example.storymasters.dto.WebsocketMessage;
 import org.example.storymasters.exception.GameNotFoundException;
 import org.example.storymasters.exception.PlayerNameTakenException;
-import org.example.storymasters.model.Game;
 import org.example.storymasters.model.Player;
 import org.example.storymasters.service.GameService;
 
