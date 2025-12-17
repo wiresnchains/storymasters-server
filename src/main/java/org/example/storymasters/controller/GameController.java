@@ -1,16 +1,30 @@
 package org.example.storymasters.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.http.HttpStatus;
+import io.javalin.json.JsonMapper;
 import io.javalin.websocket.WsCloseContext;
 import io.javalin.websocket.WsConnectContext;
+import io.javalin.websocket.WsContext;
 import io.javalin.websocket.WsMessageContext;
 import org.example.storymasters.Router;
 import org.example.storymasters.dto.CreateGameResponse;
+import org.example.storymasters.dto.SendAnswerPayload;
+import org.example.storymasters.dto.WebsocketMessage;
 import org.example.storymasters.exception.GameNotFoundException;
 import org.example.storymasters.exception.PlayerNameTakenException;
+import org.example.storymasters.model.Player;
 import org.example.storymasters.service.GameService;
 
+import java.util.HashMap;
+import java.util.function.BiConsumer;
+
 public class GameController implements Controller {
+    private static final ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private final HashMap<String, BiConsumer<Player, WebsocketMessage>> events = new HashMap<>();
+
     @Override
     public void register(Router router) {
         router.post("/create-game", ctx -> {
@@ -26,6 +40,11 @@ public class GameController implements Controller {
         });
 
         router.ws("/game/{code}/{name}", this::onConnect, this::onMessage, this::onClose);
+
+        addEvent("send-user-story", (player, message) -> {
+            SendAnswerPayload payload = mapper.convertValue(message.getData(), SendAnswerPayload.class);
+            System.out.println("Player " + player.getName() + " sent a user story: Als een " + payload.getAs() + " wil ik " + payload.getWantTo() + " zodat " + payload.getSoThat());
+        });
     }
 
     private CreateGameResponse createGame() {
@@ -33,20 +52,47 @@ public class GameController implements Controller {
         return new CreateGameResponse(game.getConnectionCode());
     }
 
+    private void addEvent(String name, BiConsumer<Player, WebsocketMessage> handler) {
+        events.put(name, handler);
+    }
+
+    private void callEvent(Player player, WebsocketMessage message) throws JsonProcessingException {
+        events.get(message.getEvent()).accept(player, message);
+    }
+
     private void onConnect(WsConnectContext ctx) {
         String code = ctx.pathParam("code");
         String name = ctx.pathParam("name");
 
         try {
-            GameService.get().joinGame(code, name);
+            GameService.get().joinGame(name, code, ctx);
         }
         catch (GameNotFoundException ex) {
             System.err.println(ex.getMessage());
+            ctx.session.close();
         }
     }
 
-    private void onMessage(WsMessageContext ctx) {
-        System.out.println(ctx.message());
+    private void onMessage(WsMessageContext ctx) throws JsonProcessingException {
+        if (!ctx.session.isOpen()) {
+            return;
+        }
+
+        WebsocketMessage message = mapper.readValue(ctx.message(), WebsocketMessage.class);
+
+        if (message.isFromHost()) {
+            callEvent(null, message);
+            return;
+        }
+
+        Player player = ctx.attribute("player");
+
+        if (player == null) {
+            ctx.session.close();
+            return;
+        }
+
+        callEvent(player, message);
     }
 
     private void onClose(WsCloseContext ctx) {

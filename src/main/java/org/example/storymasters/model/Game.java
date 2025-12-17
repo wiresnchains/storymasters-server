@@ -1,5 +1,7 @@
 package org.example.storymasters.model;
 
+import io.javalin.websocket.WsContext;
+import org.eclipse.jetty.websocket.api.Session;
 import org.example.storymasters.exception.PlayerNameTakenException;
 
 import java.util.ArrayList;
@@ -17,13 +19,14 @@ public class Game {
         return connectionCode;
     }
 
-    public Player addPlayer(String name) throws PlayerNameTakenException {
+    public Player addPlayer(String name, WsContext ctx) throws PlayerNameTakenException {
         for (var player : players) {
             if (player.getName().equals(name)) {
                 throw new PlayerNameTakenException("Player met de naam " + name + " speelt al");
             }
         }
-        var player = new Player(name);
+
+        var player = new Player(name, ctx);
         this.players.add(player);
         return player;
     }

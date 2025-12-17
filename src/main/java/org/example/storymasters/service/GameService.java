@@ -1,5 +1,6 @@
 package org.example.storymasters.service;
 
+import io.javalin.websocket.WsContext;
 import org.example.storymasters.exception.GameNotFoundException;
 import org.example.storymasters.exception.PlayerNameTakenException;
 import org.example.storymasters.model.Game;
@@ -28,9 +29,9 @@ public class GameService {
         throw new GameNotFoundException("Game met koppel code " + connectionCode + " bestaat niet");
     }
 
-    public void joinGame(String name, String connectionCode) throws GameNotFoundException, PlayerNameTakenException {
+    public void joinGame(String name, String connectionCode, WsContext ctx) throws GameNotFoundException, PlayerNameTakenException {
         var game = getGame(connectionCode);
-        game.addPlayer(name);
+        game.addPlayer(name, ctx);
     }
 
     public void quitGame(String name, String connectionCode) throws GameNotFoundException {
