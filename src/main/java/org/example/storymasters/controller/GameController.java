@@ -31,12 +31,6 @@ public class GameController implements Controller {
             ctx.json(res);
         });
 
-        router.post("/join-game", ctx -> {
-            var res = createGame();
-            ctx.status(HttpStatus.OK);
-            ctx.json(res);
-        });
-
         router.ws("/game/{code}/{name}", this::onConnect, this::onMessage, this::onClose);
 
         addEvent("send-user-story", (player, message) -> {
@@ -65,14 +59,14 @@ public class GameController implements Controller {
         try {
             GameService.get().joinGame(name, code, ctx);
         }
-        catch (GameNotFoundException ex) {
+        catch (GameNotFoundException | PlayerNameTakenException ex) {
             System.err.println(ex.getMessage());
             ctx.session.close();
         }
     }
 
     private void onMessage(WsMessageContext ctx) throws JsonProcessingException {
-        if (!ctx.session.isOpen()) {
+        if (ctx.message().equals("im-alive")) {
             return;
         }
 
@@ -100,7 +94,7 @@ public class GameController implements Controller {
         try {
             GameService.get().quitGame(name, code);
         }
-        catch (GameNotFoundException | PlayerNameTakenException ex) {
+        catch (GameNotFoundException ex) {
             System.err.println(ex.getMessage());
         }
     }

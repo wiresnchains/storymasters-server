@@ -16,6 +16,8 @@ public class GameService {
 
         games.add(game);
 
+        System.out.println("Created game " + game.getConnectionCode());
+
         return game;
     }
 
@@ -36,6 +38,11 @@ public class GameService {
 
     public void quitGame(String name, String connectionCode) throws GameNotFoundException {
         getGame(connectionCode).removePlayer(name);
+    }
+
+    public void closeGame(Game game) {
+        games.remove(game);
+        System.out.println("Closed game " + game.getConnectionCode());
     }
 
     private String generateConnectionCode() {
