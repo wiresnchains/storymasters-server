@@ -14,6 +14,7 @@ import java.util.List;
 public class Game {
     private final String connectionCode;
     private final List<Player> players = new ArrayList<>();
+    private final List<UserStory> activeRoundUserStories = new ArrayList<>();
     private boolean started;
 
     public Game(String connectionCode) {
@@ -79,14 +80,14 @@ public class Game {
         }
     }
 
-    public void showVotingStage(List<UserStory> userStories) {
-        broadcast("show-voting", new VotingPayload(userStories.stream().map(UserStoryPayload::new).toList(), false));
+    public void showVotingStage() {
+        broadcast("show-voting", new VotingPayload(activeRoundUserStories.stream().map(UserStoryPayload::new).toList(), false));
 
         System.out.println("Game " + connectionCode + " entered voting stage");
     }
 
-    public void showVoteResults(List<UserStory> userStories) {
-        broadcast("show-voting", new VotingPayload(userStories.stream().map(UserStoryPayload::new).toList(), false));
+    public void showVoteResults() {
+        broadcast("show-voting", new VotingPayload(activeRoundUserStories.stream().map(UserStoryPayload::new).toList(), true));
 
         System.out.println("Game " + connectionCode + " entered vote results stage");
     }
@@ -103,6 +104,18 @@ public class Game {
 
     public void start() {
         this.started = true;
-        broadcast("start-round", "random thema idk");
+        startRound("random thema idk");
+    }
+
+    public void startRound(String theme) {
+        broadcast("start-round", theme);
+    }
+
+    public void endRound() {
+        activeRoundUserStories.clear();
+    }
+
+    public void addUserStory(Player player, String story) {
+        activeRoundUserStories.add(new UserStory(story, player));
     }
 }

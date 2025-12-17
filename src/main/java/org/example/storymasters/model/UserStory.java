@@ -5,10 +5,10 @@ public class UserStory {
     private Player owner;
     private Integer votes;
 
-    public UserStory(String story, Player owner, Integer votes) {
+    public UserStory(String story, Player owner) {
         this.story = story;
         this.owner = owner;
-        this.votes = votes;
+        this.votes = 0;
     }
 
     public String getStory() {
