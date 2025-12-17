@@ -40,4 +40,12 @@ public class Player {
 
         socketCtx.send(new WebsocketMessage(event, data, false));
     }
+
+    public void disconnect() {
+        if (!socketCtx.session.isOpen()) {
+            return;
+        }
+
+        socketCtx.closeSession();
+    }
 }

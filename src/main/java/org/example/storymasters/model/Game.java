@@ -65,6 +65,12 @@ public class Game {
         }
     }
 
+    public void cleanup() {
+        for (var player : players) {
+            player.disconnect();
+        }
+    }
+
     public void broadcast(String eventName, Object data) {
         for (var player : players) {
             player.broadcast(eventName, data);

@@ -41,6 +41,7 @@ public class GameService {
     }
 
     public void closeGame(Game game) {
+        game.cleanup();
         games.remove(game);
         System.out.println("Closed game " + game.getConnectionCode());
     }
