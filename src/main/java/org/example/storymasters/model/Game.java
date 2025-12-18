@@ -15,8 +15,8 @@ import java.util.Map;
 
 public class Game {
     private final String connectionCode;
-    private final List<Player> players = new ArrayList<>();
-    private final List<UserStory> activeRoundUserStories = new ArrayList<>();
+    private final List<Player> players = new ArrayList<Player>();
+    private final List<UserStory> activeRoundUserStories = new ArrayList<UserStory>();
     private boolean started;
 
     public Game(String connectionCode) {

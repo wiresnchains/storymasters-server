@@ -11,16 +11,15 @@ import java.util.List;
 import java.util.Map;
 
 public class GameService {
-    private final List<Game> games = new ArrayList<>();
-    private final Map<String, Game> gamesMap = new LinkedHashMap<String, Game>();
+    // private final List<Game> games = new ArrayList<>();
+    private final Map<String, Game> games = new LinkedHashMap<String, Game>();
 
     public Game createGame() {
         var game = new Game(generateConnectionCode());
 
-        games.add(game);
-        gamesMap.put(game.getConnectionCode(), game);
+        games.put(game.getConnectionCode(), game);
 
-        System.out.println("Created game " + game.getConnectionCode());
+        System.out.println("\nCreating game: " + game.getConnectionCode());
 
         return game;
     }
@@ -31,7 +30,7 @@ public class GameService {
     }
 
     public Game getGame(String connectionCode) throws GameNotFoundException {
-        Game game = this.gamesMap.get(connectionCode);
+        Game game = this.games.get(connectionCode);
         // for (var game : games) {
         //     if (game.getConnectionCode().equals(connectionCode)) {
         //         return game;
@@ -58,27 +57,16 @@ public class GameService {
 
     public void closeGame(Game game) {
         game.cleanup();
-        games.remove(game);
+        games.remove(game.getConnectionCode());
         System.out.println("Closed game " + game.getConnectionCode());
     }
 
     private String generateConnectionCode() {
-        while (true) {
-            int codeInt = (int) (Math.random() * 1_000_000);
-            String code = String.format("%06d", codeInt);
+        int codeInt = (int) (Math.random() * 1_000_000);
+        String code = String.format("%06d", codeInt);
 
-                boolean exists = false;
-            for (var game : games) {
-                if (game.getConnectionCode().equals(code)) {
-                    exists = true;
-                    break;
-                }
-            }
-
-            if (!exists) {
-                return code;
-            }
-        }
+        if (this.games.containsKey(code)) return generateConnectionCode();
+        return code;
     }
 
     // Singleton

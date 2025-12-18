@@ -1,7 +1,9 @@
 package org.example.storymasters.controller;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.http.HttpStatus;
 import io.javalin.websocket.WsCloseContext;
@@ -29,7 +31,7 @@ public class GameController implements Controller {
     public void register(Router router) {
         router.post("/create-game", ctx -> {
             CreateGameResponse res = createGame();
-            System.out.println("\nCreating game: " + res.getConnectionCode());
+            // System.out.println("\nCreating game: " + res.getConnectionCode());
             ctx.status(HttpStatus.OK);
             ctx.json(res);
         });
@@ -47,7 +49,9 @@ public class GameController implements Controller {
         addEvent("send-user-story", (player, message) -> {
             var game = player.getGame();
             GenericPayload payload = mapper.convertValue(message.getData(), GenericPayload.class);
-            game.addUserStory(player, payload.getMessage());
+            String userStory = payload.getMessage();
+            System.out.println(String.format("\n%s: \n%s\n", player.getName(), userStory));
+            game.addUserStory(player, userStory);
         });
     }
 
@@ -65,7 +69,7 @@ public class GameController implements Controller {
         events.put(name, handler);
     }
 
-    private void callEvent(Player player, WebsocketMessage message) throws JsonProcessingException {
+    private void callEvent(Player player, WebsocketMessage message) {
         events.get(message.getEvent()).accept(player, message);
     }
 
@@ -84,26 +88,33 @@ public class GameController implements Controller {
         }
     }
 
-    private void onMessage(WsMessageContext ctx) throws JsonProcessingException {
-        if (ctx.message().equals("im-alive")) {
+    private void onMessage(WsMessageContext ctx) {
+        if (ctx.message().equals("I'm alive")) return;
+
+        try {
+            WebsocketMessage message = mapper.readValue(ctx.message(), WebsocketMessage.class);
+
+            if (message.isFromHost()) {
+                callEvent(null, message);
+                return;
+            }
+
+            Player player = ctx.attribute("player");
+
+            if (player == null) {
+                ctx.session.close();
+                return;
+            }
+
+            callEvent(player, message);
+        } catch (JsonParseException ex) {
+            System.out.println(ctx.message());
+            return;
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            System.out.println(ctx.message());
             return;
         }
-
-        WebsocketMessage message = mapper.readValue(ctx.message(), WebsocketMessage.class);
-
-        if (message.isFromHost()) {
-            callEvent(null, message);
-            return;
-        }
-
-        Player player = ctx.attribute("player");
-
-        if (player == null) {
-            ctx.session.close();
-            return;
-        }
-
-        callEvent(player, message);
     }
 
     private void onClose(WsCloseContext ctx) {
