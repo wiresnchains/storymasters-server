@@ -12,16 +12,33 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class Game {
     private final String connectionCode;
     private final List<Player> players = new ArrayList<Player>();
     private final List<UserStory> activeRoundUserStories = new ArrayList<UserStory>();
     private boolean started;
+    private int roundsPlayed;
+
+    private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     public Game(String connectionCode) {
         this.connectionCode = connectionCode;
         this.started = false;
+        this.roundsPlayed = 0;
+
+        scheduler.schedule(() -> {
+            if (players.isEmpty()) {
+                System.out.println("Closing game " + connectionCode + " (idle)");
+                GameService.get().closeGame(this);
+            }
+            else {
+                GameService.get().startGame(connectionCode);
+            }
+        }, 30, TimeUnit.SECONDS);
     }
 
     public String getConnectionCode() {
@@ -111,10 +128,39 @@ public class Game {
 
     public void startRound(String theme) {
         broadcast("start-round", theme);
+
+        scheduler.schedule(this::endRound, 1, TimeUnit.MINUTES);
+
+        System.out.println("[" + connectionCode + "] Round started");
     }
 
     public void endRound() {
+        System.out.println("[" + connectionCode + "] Ending round...");
+
         activeRoundUserStories.clear();
+        showVotingStage();
+
+        scheduler.schedule(() -> {
+            showVoteResults();
+
+            scheduler.schedule(() -> {
+                showLeaderboard();
+
+                scheduler.schedule(() -> {
+                    this.roundsPlayed++;
+
+                    System.out.println("Game " + connectionCode + " round ended");
+
+                    if (this.roundsPlayed >= 5) {
+                        System.out.println("Closing game " + connectionCode + " (5 rounds played)");
+                        GameService.get().closeGame(this);
+                        return;
+                    }
+
+                    startRound("aaaaaa");
+                }, 5, TimeUnit.SECONDS);
+            }, 5, TimeUnit.SECONDS);
+        }, 10, TimeUnit.SECONDS);
     }
 
     public void addUserStory(Player player, String story) {
