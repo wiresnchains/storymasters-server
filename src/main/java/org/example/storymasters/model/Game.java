@@ -23,7 +23,7 @@ public class Game {
     private boolean started;
     private int roundsPlayed;
 
-    private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     public Game(String connectionCode) {
         this.connectionCode = connectionCode;
@@ -91,6 +91,8 @@ public class Game {
         for (var player : players) {
             player.disconnect();
         }
+
+        scheduler.shutdownNow();
     }
 
     public void broadcast(String eventName, Object data) {
@@ -164,6 +166,7 @@ public class Game {
     }
 
     public void addUserStory(Player player, String story) {
+        System.out.println("[" + connectionCode + "] Got user story " + story + " from " + player.getName());
         activeRoundUserStories.add(new UserStory(story, player));
     }
 }
