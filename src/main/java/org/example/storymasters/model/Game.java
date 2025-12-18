@@ -11,6 +11,7 @@ import org.example.storymasters.service.GameService;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -18,11 +19,13 @@ public class Game {
     private final String connectionCode;
     private final List<Player> players = new ArrayList<>();
     private final List<UserStory> activeRoundUserStories = new ArrayList<>();
+    private final HashSet<Player> roundUserStories = new HashSet<>();
     private final HashSet<Player> roundVotes = new HashSet<>();
     private boolean started;
     private int roundsPlayed;
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledFuture<?> scheduledRoundEnd;
 
     public Game(String connectionCode) {
         this.connectionCode = connectionCode;
@@ -136,9 +139,14 @@ public class Game {
     }
 
     public void startRound(String theme) {
+        if (scheduledRoundEnd != null) {
+            scheduledRoundEnd.cancel(true);
+            scheduledRoundEnd = null;
+        }
+
         broadcast("start-round", theme);
 
-        scheduler.schedule(this::endRound, 1, TimeUnit.MINUTES);
+        scheduledRoundEnd = scheduler.schedule(this::endRound, 1, TimeUnit.MINUTES);
 
         System.out.println("[" + connectionCode + "] Round started");
     }
@@ -164,6 +172,7 @@ public class Game {
                     this.roundsPlayed++;
 
                     activeRoundUserStories.clear();
+                    roundUserStories.clear();
                     roundVotes.clear();
 
                     System.out.println("Game " + connectionCode + " round ended");
@@ -175,14 +184,28 @@ public class Game {
                     }
 
                     startRound("aaaaaa");
-                }, 5, TimeUnit.SECONDS);
-            }, 5, TimeUnit.SECONDS);
+                }, 10, TimeUnit.SECONDS);
+            }, 10, TimeUnit.SECONDS);
         }, 10, TimeUnit.SECONDS);
     }
 
     public void addUserStory(Player player, String story) {
+        if (roundUserStories.contains(player)) {
+            return; // cannot submit 2 user stories
+        }
+
         System.out.println("[" + connectionCode + "] Got user story " + story + " from " + player.getName());
         activeRoundUserStories.add(new UserStory(story, player));
+        roundUserStories.add(player);
+
+        if (roundUserStories.size() >= players.size()) {
+            if (scheduledRoundEnd != null) {
+                scheduledRoundEnd.cancel(true);
+                scheduledRoundEnd = null;
+            }
+
+            endRound();
+        }
     }
 
     public void voteFor(Player player, Integer userStoryIndex) {
@@ -191,6 +214,11 @@ public class Game {
         }
 
         var userStory = activeRoundUserStories.get(userStoryIndex);
+
+        if (userStory.getOwner().getName().equals(player.getName())) {
+            return;
+        }
+
         userStory.setVotes(userStory.getVotes() + 1);
         roundVotes.add(player);
     }
