@@ -37,7 +37,7 @@ public class Game {
                 System.out.println("Closing game " + connectionCode + " (idle)");
                 GameService.get().closeGame(this);
             }
-            else {
+            else if (!started) {
                 GameService.get().startGame(connectionCode);
             }
         }, 30, TimeUnit.SECONDS);
@@ -152,6 +152,10 @@ public class Game {
     }
 
     public void endRound() {
+        if (Thread.currentThread().isInterrupted()) {
+            return;
+        }
+
         System.out.println("[" + connectionCode + "] Ending round...");
 
         showVotingStage();
