@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -24,11 +25,13 @@ public class Game {
     private final String connectionCode;
     private final List<Player> players = new ArrayList<Player>();
     private final List<UserStory> activeRoundUserStories = new ArrayList<UserStory>();
+    private final HashSet<Player> roundUserStories = new HashSet<>();
     private final HashSet<Player> roundVotes = new HashSet<>();
     private boolean started;
     private int roundsPlayed;
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledFuture<?> scheduledRoundEnd;
 
     public Game(String connectionCode) {
         this.connectionCode = connectionCode;
@@ -40,7 +43,7 @@ public class Game {
                 System.out.println("Closing game " + connectionCode + " (idle)");
                 GameService.get().closeGame(this);
             }
-            else {
+            else if (!started) {
                 GameService.get().startGame(connectionCode);
             }
         }, 30, TimeUnit.SECONDS);
@@ -150,6 +153,11 @@ public class Game {
     ));
 
     public void startRound() {
+        if (scheduledRoundEnd != null) {
+            scheduledRoundEnd.cancel(true);
+            scheduledRoundEnd = null;
+        }
+
         int index = (int) Math.floor(Math.random() * themes.size());
         String theme = this.themes.get(index);
         System.out.println("Theme: " + theme);
@@ -158,12 +166,16 @@ public class Game {
 
         broadcast("start-round", theme);
 
-        scheduler.schedule(this::endRound, 60, TimeUnit.SECONDS);
+        scheduledRoundEnd = scheduler.schedule(this::endRound, 60, TimeUnit.SECONDS);
 
         System.out.println("[" + connectionCode + "] Round started");
     }
 
     public void endRound() {
+        if (Thread.currentThread().isInterrupted()) {
+            return;
+        }
+
         System.out.println("[" + connectionCode + "] Ending round...");
 
         showVotingStage();
@@ -184,6 +196,7 @@ public class Game {
                     this.roundsPlayed++;
 
                     activeRoundUserStories.clear();
+                    roundUserStories.clear();
                     roundVotes.clear();
 
                     System.out.println("Game " + connectionCode + " round ended");
@@ -196,14 +209,28 @@ public class Game {
                     }
 
                     startRound();
-                }, 5, TimeUnit.SECONDS);
-            }, 5, TimeUnit.SECONDS);
+                }, 10, TimeUnit.SECONDS);
+            }, 10, TimeUnit.SECONDS);
         }, 10, TimeUnit.SECONDS);
     }
 
     public void addUserStory(Player player, String story) {
+        if (roundUserStories.contains(player)) {
+            return; // cannot submit 2 user stories
+        }
+
         System.out.println("[" + connectionCode + "] Got user story " + story + " from " + player.getName());
         activeRoundUserStories.add(new UserStory(story, player));
+        roundUserStories.add(player);
+
+        if (roundUserStories.size() >= players.size()) {
+            if (scheduledRoundEnd != null) {
+                scheduledRoundEnd.cancel(true);
+                scheduledRoundEnd = null;
+            }
+
+            endRound();
+        }
     }
 
     public void voteFor(Player player, Integer userStoryIndex) {
@@ -212,6 +239,11 @@ public class Game {
         }
 
         var userStory = activeRoundUserStories.get(userStoryIndex);
+
+        if (userStory.getOwner().getName().equals(player.getName())) {
+            return;
+        }
+
         userStory.setVotes(userStory.getVotes() + 1);
         roundVotes.add(player);
     }
