@@ -10,22 +10,25 @@ import org.example.storymasters.service.GameService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 public class Game {
     private final int MAX_GAME_ROUND_COUNT = 5;
     private final String connectionCode;
     private final List<Player> players = new ArrayList<Player>();
     private final List<UserStory> activeRoundUserStories = new ArrayList<UserStory>();
+    private final HashSet<Player> roundVotes = new HashSet<>();
     private boolean started;
     private int roundsPlayed;
 
-    private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     public Game(String connectionCode) {
         this.connectionCode = connectionCode;
@@ -93,6 +96,8 @@ public class Game {
         for (var player : players) {
             player.disconnect();
         }
+
+        scheduler.shutdownNow();
     }
 
     public void broadcast(String eventName, Object data) {
@@ -102,13 +107,21 @@ public class Game {
     }
 
     public void showVotingStage() {
-        broadcast("show-voting", new VotingPayload(activeRoundUserStories.stream().map(UserStoryPayload::new).toList(), false));
+        var storyPayloads = IntStream.range(0, activeRoundUserStories.size())
+            .mapToObj(i -> new UserStoryPayload(activeRoundUserStories.get(i), i))
+            .toList();
+
+        broadcast("show-voting", new VotingPayload(storyPayloads, false));
 
         System.out.println("Game " + connectionCode + " entered voting stage");
     }
 
     public void showVoteResults() {
-        broadcast("show-voting", new VotingPayload(activeRoundUserStories.stream().map(UserStoryPayload::new).toList(), true));
+        var storyPayloads = IntStream.range(0, activeRoundUserStories.size())
+                .mapToObj(i -> new UserStoryPayload(activeRoundUserStories.get(i), i))
+                .toList();
+
+        broadcast("show-voting", new VotingPayload(storyPayloads, true));
 
         System.out.println("Game " + connectionCode + " entered vote results stage");
     }
@@ -128,7 +141,7 @@ public class Game {
         startRound();
     }
 
-    private ArrayList<String> themes = new ArrayList(List.of(
+    private ArrayList<String> themes = new ArrayList<String>(List.of(
         // "App die kerstman helpt met zijn taken",
         "App die kerstelven helpen cadeautjes in te pakken",
         "Systeem om te het rendier-verzorgprocess te waarborgen",
@@ -138,7 +151,7 @@ public class Game {
 
     public void startRound() {
         int index = (int) Math.floor(Math.random() * themes.size());
-        String theme = this.themes.get(index)
+        String theme = this.themes.get(index);
         System.out.println("Theme: " + theme);
 
         themes.remove(index);
@@ -153,17 +166,25 @@ public class Game {
     public void endRound() {
         System.out.println("[" + connectionCode + "] Ending round...");
 
-        activeRoundUserStories.clear();
         showVotingStage();
 
         scheduler.schedule(() -> {
             showVoteResults();
 
             scheduler.schedule(() -> {
+                var winner = getCurrentRoundWinner();
+
+                if (winner != null) {
+                    winner.getOwner().setPoints(winner.getOwner().getPoints() + 5);
+                }
+
                 showLeaderboard();
 
                 scheduler.schedule(() -> {
                     this.roundsPlayed++;
+
+                    activeRoundUserStories.clear();
+                    roundVotes.clear();
 
                     System.out.println("Game " + connectionCode + " round ended");
 
@@ -181,6 +202,36 @@ public class Game {
     }
 
     public void addUserStory(Player player, String story) {
+        System.out.println("[" + connectionCode + "] Got user story " + story + " from " + player.getName());
         activeRoundUserStories.add(new UserStory(story, player));
+    }
+
+    public void voteFor(Player player, Integer userStoryIndex) {
+        if (roundVotes.contains(player)) {
+            return; // player has already voted this round
+        }
+
+        var userStory = activeRoundUserStories.get(userStoryIndex);
+        userStory.setVotes(userStory.getVotes() + 1);
+        roundVotes.add(player);
+    }
+
+    public UserStory getCurrentRoundWinner() {
+        UserStory winningUs = null;
+
+        for (var userStory : activeRoundUserStories) {
+            if (winningUs == null) {
+                winningUs = userStory;
+                continue;
+            }
+
+            if (winningUs.getVotes() >= userStory.getVotes()) {
+                continue;
+            }
+
+            winningUs = userStory;
+        }
+
+        return winningUs;
     }
 }

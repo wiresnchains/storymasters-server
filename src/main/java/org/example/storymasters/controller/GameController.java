@@ -10,10 +10,7 @@ import io.javalin.websocket.WsCloseContext;
 import io.javalin.websocket.WsConnectContext;
 import io.javalin.websocket.WsMessageContext;
 import org.example.storymasters.Router;
-import org.example.storymasters.dto.CreateGameResponse;
-import org.example.storymasters.dto.GenericPayload;
-import org.example.storymasters.dto.StartGameRequest;
-import org.example.storymasters.dto.WebsocketMessage;
+import org.example.storymasters.dto.*;
 import org.example.storymasters.exception.GameNotFoundException;
 import org.example.storymasters.exception.PlayerNameTakenException;
 import org.example.storymasters.model.Game;
@@ -52,6 +49,12 @@ public class GameController implements Controller {
             String userStory = payload.getMessage();
             System.out.println(String.format("\n%s: \n%s\n", player.getName(), userStory));
             game.addUserStory(player, userStory);
+        });
+
+        addEvent("vote-for", (player, message) -> {
+            var game = player.getGame();
+            var payload = mapper.convertValue(message.getData(), VoteForPayload.class);
+            game.voteFor(player, payload.getUserStoryIndex());
         });
     }
 
