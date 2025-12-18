@@ -3,22 +3,33 @@ package org.example.storymasters.dto;
 import org.example.storymasters.model.UserStory;
 
 public class UserStoryPayload {
+    private Integer index;
     private String story;
     private PlayerPayload owner;
     private Integer votes;
 
     public UserStoryPayload() {}
 
-    public UserStoryPayload(String story, PlayerPayload owner, Integer votes) {
+    public UserStoryPayload(Integer index, String story, PlayerPayload owner, Integer votes) {
+        this.index = index;
         this.story = story;
         this.owner = owner;
         this.votes = votes;
     }
 
-    public UserStoryPayload(UserStory userStory) {
+    public UserStoryPayload(UserStory userStory, Integer index) {
+        this.index = index;
         this.story = userStory.getStory();
         this.owner = new PlayerPayload(userStory.getOwner());
         this.votes = userStory.getVotes();
+    }
+
+    public Integer getIndex() {
+        return index;
+    }
+
+    public void setIndex(Integer index) {
+        this.index = index;
     }
 
     public String getStory() {
