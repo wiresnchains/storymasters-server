@@ -6,13 +6,12 @@ public class Application {
     public static void main(String[] args) {
         var router = new Router();
         var gameCtl = new GameController();
-        // gameCtl.
-
 
         gameCtl.register(router);
 
         router.run(8080);
 
         System.out.println("\n".repeat(25));
-    }
+    }   
 }
+

@@ -9,6 +9,7 @@ import org.example.storymasters.exception.PlayerNameTakenException;
 import org.example.storymasters.service.GameService;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class Game {
+    private final int MAX_GAME_ROUND_COUNT = 5;
     private final String connectionCode;
     private final List<Player> players = new ArrayList<Player>();
     private final List<UserStory> activeRoundUserStories = new ArrayList<UserStory>();
@@ -123,13 +125,27 @@ public class Game {
 
     public void start() {
         this.started = true;
-        startRound("random thema idk");
+        startRound();
     }
 
-    public void startRound(String theme) {
+    private ArrayList<String> themes = new ArrayList(List.of(
+        // "App die kerstman helpt met zijn taken",
+        "App die kerstelven helpen cadeautjes in te pakken",
+        "Systeem om te het rendier-verzorgprocess te waarborgen",
+        "Kerstman en hulptroepen helpen alle cadeautjes rond te brengen op kerstavond",
+        "Meta: (spel)website welke je helpt oefenen met userstories schrijven"
+    ));
+
+    public void startRound() {
+        int index = (int) Math.floor(Math.random() * themes.size());
+        String theme = this.themes.get(index)
+        System.out.println("Theme: " + theme);
+
+        themes.remove(index);
+
         broadcast("start-round", theme);
 
-        scheduler.schedule(this::endRound, 1, TimeUnit.MINUTES);
+        scheduler.schedule(this::endRound, 60, TimeUnit.SECONDS);
 
         System.out.println("[" + connectionCode + "] Round started");
     }
@@ -151,13 +167,14 @@ public class Game {
 
                     System.out.println("Game " + connectionCode + " round ended");
 
-                    if (this.roundsPlayed >= 5) {
-                        System.out.println("Closing game " + connectionCode + " (5 rounds played)");
+                    int rounds = Math.min(this.themes.size(), MAX_GAME_ROUND_COUNT);
+                    if (this.roundsPlayed >= rounds) {
+                        System.out.println(String.format("Closing game %s (%s rounds played)", connectionCode, rounds));
                         GameService.get().closeGame(this);
                         return;
                     }
 
-                    startRound("aaaaaa");
+                    startRound();
                 }, 5, TimeUnit.SECONDS);
             }, 5, TimeUnit.SECONDS);
         }, 10, TimeUnit.SECONDS);
